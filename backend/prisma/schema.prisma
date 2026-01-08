@@ -1,0 +1,194 @@
+// This is your Prisma schema file
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// Enums
+enum Rol {
+  ADMIN
+  CAPITAN
+  ESTUDIANTE
+}
+
+enum EstadoPago {
+  PENDIENTE
+  VALIDADO
+  RECHAZADO
+}
+
+enum EstadoPartido {
+  PROGRAMADO
+  EN_CURSO
+  FINALIZADO
+  CANCELADO
+}
+
+enum TipoSorteo {
+  BRACKET // Eliminatoria
+  GRUPOS  // Fase de grupos
+}
+
+// Modelos
+
+model Usuario {
+  id              Int             @id @default(autoincrement())
+  cedula          String          @unique
+  nombres         String
+  apellidos       String
+  email           String          @unique // correo_uide
+  password        String
+  rol             Rol             @default(ESTUDIANTE)
+  facultad        String?
+  carrera         String?         // [NEW] Added per requirements
+  createdAt       DateTime        @default(now())
+  
+  // Relaciones
+  equipoCapitan   Equipo?         @relation("CapitanEquipo")
+  inscripciones   MiembroEquipo[]
+  validaciones    ValidacionPago[] // Admin que valida
+  pagosRealizados ValidacionPago[] @relation("UsuarioPagador")
+  feedback        Feedback[]
+}
+
+model Campeonato {
+  id          Int      @id @default(autoincrement())
+  nombre      String
+  anio        Int
+  fechaInicio DateTime
+  fechaFin    DateTime?
+  torneos     Torneo[]
+}
+
+model Torneo {
+  id            Int      @id @default(autoincrement())
+  campeonatoId  Int
+  disciplina    String   // Futbol, Basket, Ecuavoley
+  categoria     String   // [NEW] Hombres, Mujeres, Mixto
+  genero        String?  // Redundante con categoria, pero util para filtros
+  
+  campeonato    Campeonato @relation(fields: [campeonatoId], references: [id])
+  partidos      Partido[]
+  inscripciones EquipoTorneo[]
+}
+
+model Equipo {
+  id          Int      @id @default(autoincrement())
+  nombre      String
+  logoUrl     String?
+  facultad    String?
+  capitanId   Int      @unique
+  
+  capitan     Usuario  @relation("CapitanEquipo", fields: [capitanId], references: [id])
+  miembros    MiembroEquipo[]
+  torneos     EquipoTorneo[]
+  
+  partidosLocal     Partido[] @relation("EquipoLocal")
+  partidosVisitante Partido[] @relation("EquipoVisitante")
+  
+  pagos       ValidacionPago[]
+}
+
+model MiembroEquipo {
+  id        Int      @id @default(autoincrement())
+  equipoId  Int
+  usuarioId Int
+  
+  equipo    Equipo   @relation(fields: [equipoId], references: [id])
+  usuario   Usuario  @relation(fields: [usuarioId], references: [id])
+  
+  @@unique([equipoId, usuarioId])
+}
+
+model EquipoTorneo {
+  id        Int      @id @default(autoincrement())
+  equipoId  Int
+  torneoId  Int
+  estado    String   @default("INSCRITO") // INSCRITO, ACEPTADO
+  
+  equipo    Equipo   @relation(fields: [equipoId], references: [id])
+  torneo    Torneo   @relation(fields: [torneoId], references: [id])
+  
+  @@unique([equipoId, torneoId])
+}
+
+model ValidacionPago {
+  id            Int      @id @default(autoincrement())
+  equipoId      Int
+  usuarioPagoId Int      // Quien subio el pago (Capitan)
+  monto         Decimal
+  comprobanteUrl String
+  estado        EstadoPago @default(PENDIENTE)
+  fechaSubida   DateTime @default(now())
+  validadoPorId Int?     // Admin
+  observacion   String?
+  
+  equipo        Equipo   @relation(fields: [equipoId], references: [id])
+  usuarioPago   Usuario  @relation("UsuarioPagador", fields: [usuarioPagoId], references: [id])
+  validadoPor   Usuario? @relation(fields: [validadoPorId], references: [id])
+}
+
+model Cancha {
+  id        Int      @id @default(autoincrement())
+  nombre    String
+  ubicacion String?
+  partidos  Partido[]
+}
+
+model Arbitro {
+  id        Int      @id @default(autoincrement())
+  nombres   String
+  contacto  String?
+  partidos  Partido[]
+}
+
+model Partido {
+  id            Int           @id @default(autoincrement())
+  torneoId      Int
+  canchaId      Int?
+  arbitroId     Int?          // [NEW]
+  equipoLocalId Int?          // Nullable para permitir "Ganador de llave X" en futuro
+  equipoVisitanteId Int?
+  
+  fechaHora     DateTime
+  estado        EstadoPartido @default(PROGRAMADO)
+  
+  marcadorLocal Int?          @default(0)
+  marcadorVisitante Int?      @default(0)
+  
+  fase          String?       // Octavos, Cuartos, Semis, Final
+  llave         String?       // ID para el bracket (e.g., "A1")
+  siguientePartidoId Int?     // Para avanzar en bracket automaticamente
+  
+  torneo        Torneo        @relation(fields: [torneoId], references: [id])
+  cancha        Cancha?       @relation(fields: [canchaId], references: [id])
+  arbitro       Arbitro?      @relation(fields: [arbitroId], references: [id])
+  equipoLocal   Equipo?       @relation("EquipoLocal", fields: [equipoLocalId], references: [id])
+  equipoVisitante Equipo?     @relation("EquipoVisitante", fields: [equipoVisitanteId], references: [id])
+  
+  streaming     Streaming?
+}
+
+model Streaming {
+  id        Int      @id @default(autoincrement())
+  partidoId Int      @unique
+  url       String
+  isLive    Boolean  @default(false)
+  
+  partido   Partido  @relation(fields: [partidoId], references: [id])
+}
+
+// [NEW] Feedback Module
+model Feedback {
+  id        Int      @id @default(autoincrement())
+  usuarioId Int?
+  mensaje   String   @db.Text
+  tipo      String   // RECLAMO, SUGERENCIA
+  fecha     DateTime @default(now())
+  
+  usuario   Usuario? @relation(fields: [usuarioId], references: [id])
+}
