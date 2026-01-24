@@ -1,4 +1,42 @@
 -- CreateTable
+CREATE TABLE `Facultad` (
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `nombre` VARCHAR(191) NOT NULL,
+
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `Escuela` (
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `nombre` VARCHAR(191) NOT NULL,
+    `facultadId` INTEGER NOT NULL,
+
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `Grupo` (
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `nombre` VARCHAR(191) NOT NULL,
+    `equipoTorneoId` INTEGER NOT NULL,
+
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `Sorteo` (
+    `localId` INTEGER NOT NULL,
+    `visitanteId` INTEGER NOT NULL,
+    `canchaId` INTEGER NOT NULL,
+    `arbitroId` INTEGER NOT NULL,
+    `fechaEncuentro` DATETIME(3) NULL,
+    `sorteoCol` VARCHAR(191) NULL,
+
+    PRIMARY KEY (`localId`, `visitanteId`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
 CREATE TABLE `Usuario` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `cedula` VARCHAR(191) NOT NULL,
@@ -144,6 +182,24 @@ CREATE TABLE `Feedback` (
 
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- AddForeignKey
+ALTER TABLE `Escuela` ADD CONSTRAINT `Escuela_facultadId_fkey` FOREIGN KEY (`facultadId`) REFERENCES `Facultad`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `Grupo` ADD CONSTRAINT `Grupo_equipoTorneoId_fkey` FOREIGN KEY (`equipoTorneoId`) REFERENCES `EquipoTorneo`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `Sorteo` ADD CONSTRAINT `Sorteo_localId_fkey` FOREIGN KEY (`localId`) REFERENCES `Grupo`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `Sorteo` ADD CONSTRAINT `Sorteo_visitanteId_fkey` FOREIGN KEY (`visitanteId`) REFERENCES `Grupo`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `Sorteo` ADD CONSTRAINT `Sorteo_canchaId_fkey` FOREIGN KEY (`canchaId`) REFERENCES `Cancha`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `Sorteo` ADD CONSTRAINT `Sorteo_arbitroId_fkey` FOREIGN KEY (`arbitroId`) REFERENCES `Arbitro`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `Torneo` ADD CONSTRAINT `Torneo_campeonatoId_fkey` FOREIGN KEY (`campeonatoId`) REFERENCES `Campeonato`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;

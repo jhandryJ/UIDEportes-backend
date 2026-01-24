@@ -1,4 +1,4 @@
-import Fastify from 'fastify';
+import Fastify, { FastifyError } from 'fastify';
 import cors from '@fastify/cors';
 import swagger from '@fastify/swagger';
 import swaggerUI from '@fastify/swagger-ui';
@@ -8,6 +8,8 @@ import { z } from 'zod';
 import fjwt from '@fastify/jwt';
 import { authRoutes } from './modules/auth/auth.routes.js';
 import { tournamentRoutes } from './modules/tournaments/tournaments.routes.js';
+import { teamRoutes } from './modules/teams/teams.routes.js';
+import { enrollmentRoutes } from './modules/enrollments/enrollments.routes.js';
 
 const app = Fastify({
     logger: true,
@@ -36,7 +38,9 @@ app.register(swagger, {
         servers: [],
         tags: [
             { name: 'Auth', description: 'Authentication related endpoints' },
-            { name: 'Torneos', description: 'Championship and Tournament management' }
+            { name: 'Torneos', description: 'Championship and Tournament management' },
+            { name: 'Equipos', description: 'Team management' },
+            { name: 'Inscripciones', description: 'Tournament enrollment management' }
         ],
         components: {
             securitySchemes: {
@@ -58,6 +62,23 @@ app.register(swaggerUI, {
 // Register Modules
 app.register(authRoutes, { prefix: '/api/auth' });
 app.register(tournamentRoutes, { prefix: '/api' });
+app.register(teamRoutes, { prefix: '/api' });
+app.register(enrollmentRoutes, { prefix: '/api' });
+
+// Global Error Handler
+app.setErrorHandler((error: FastifyError, request, reply) => {
+    if (error.code === 'FST_ERR_CTP_INVALID_JSON_BODY') {
+        reply.status(400).send({
+            statusCode: 400,
+            error: 'Bad Request',
+            message: 'El cuerpo de la solicitud no es un JSON válido. Verifique la sintaxis y el cabecera Content-Type.'
+        });
+        return;
+    }
+
+    // Default error handling
+    reply.send(error);
+});
 
 // Basic Routes
 app.get('/health', async () => {

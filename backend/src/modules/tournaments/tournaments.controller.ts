@@ -41,11 +41,54 @@ export async function createTorneoHandler(
         const torneo = await prisma.torneo.create({
             data: {
                 ...data,
-                genero: data.categoria // Syncing redundant field as per schema notes
+                // genero is now passed explicitly in data.genero
             }
         });
         return reply.code(201).send(torneo);
     } catch (e) {
         return reply.code(500).send({ message: 'Error creating tournament' });
+    }
+}
+
+export async function deleteCampeonatoHandler(
+    request: FastifyRequest<{ Params: { id: string } }>,
+    reply: FastifyReply
+) {
+    const { id } = request.params;
+    try {
+        await prisma.campeonato.delete({
+            where: { id: Number(id) }
+        });
+        return reply.code(204).send();
+    } catch (e: any) {
+        if (e.code === 'P2025') { // Record not found
+            return reply.code(404).send({ message: 'Championship not found' });
+        }
+        // Foreign key constraint failure likely if deleting championship with existing tournaments/matches
+        if (e.code === 'P2003') {
+            return reply.code(409).send({ message: 'Cannot delete championship with associated tournaments' });
+        }
+        return reply.code(500).send({ message: 'Error deleting championship' });
+    }
+}
+
+export async function deleteTorneoHandler(
+    request: FastifyRequest<{ Params: { id: string } }>,
+    reply: FastifyReply
+) {
+    const { id } = request.params;
+    try {
+        await prisma.torneo.delete({
+            where: { id: Number(id) }
+        });
+        return reply.code(204).send();
+    } catch (e: any) {
+        if (e.code === 'P2025') {
+            return reply.code(404).send({ message: 'Tournament not found' });
+        }
+        if (e.code === 'P2003') {
+            return reply.code(409).send({ message: 'Cannot delete tournament with associated matches/teams' });
+        }
+        return reply.code(500).send({ message: 'Error deleting tournament' });
     }
 }

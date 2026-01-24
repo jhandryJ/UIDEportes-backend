@@ -47,8 +47,7 @@ export async function loginUserHandler(
         return reply.code(401).send({ message: 'Invalid email or password' });
     }
 
-    // @ts-ignore - types are tricky with fastify-jwt inside modules without global augmentation
-    const accessToken = request.jwt.sign({
+    const accessToken = request.server.jwt.sign({
         id: user.id,
         email: user.email,
         rol: user.rol,
@@ -63,4 +62,29 @@ export async function loginUserHandler(
             rol: user.rol,
         },
     };
+}
+
+export async function deleteUserHandler(
+    request: FastifyRequest<{ Params: { id: string } }>,
+    reply: FastifyReply
+) {
+    const { id } = request.params;
+    const adminUser = request.user as { rol: string };
+
+    // Verify admin role (assuming middleware does it, but double check usually good or rely on route config)
+    if (adminUser.rol !== 'ADMIN') {
+        return reply.code(403).send({ message: 'Forbidden. Only admins can delete users.' });
+    }
+
+    try {
+        await prisma.usuario.delete({
+            where: { id: Number(id) }
+        });
+        return reply.code(204).send();
+    } catch (e: any) {
+        if (e.code === 'P2025') {
+            return reply.code(404).send({ message: 'User not found' });
+        }
+        return reply.code(500).send({ message: 'Error deleting user' });
+    }
 }

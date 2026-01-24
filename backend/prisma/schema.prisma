@@ -35,6 +35,46 @@ enum TipoSorteo {
 
 // Modelos
 
+model Facultad {
+  id       Int       @id @default(autoincrement())
+  nombre   String
+  escuelas Escuela[]
+}
+
+model Escuela {
+  id         Int      @id @default(autoincrement())
+  nombre     String
+  facultadId Int
+  facultad   Facultad @relation(fields: [facultadId], references: [id])
+}
+
+model Grupo {
+  id             Int          @id @default(autoincrement())
+  nombre         String       // Nombre del grupo (ej. "A", "B")
+  equipoTorneoId Int
+  
+  equipoTorneo   EquipoTorneo @relation(fields: [equipoTorneoId], references: [id])
+  
+  sorteosLocal     Sorteo[] @relation("SorteoLocal")
+  sorteosVisitante Sorteo[] @relation("SorteoVisitante")
+}
+
+model Sorteo {
+  localId     Int
+  visitanteId Int
+  canchaId    Int
+  arbitroId   Int
+  fechaEncuentro DateTime?
+  sorteoCol   String?
+
+  local       Grupo   @relation("SorteoLocal", fields: [localId], references: [id])
+  visitante   Grupo   @relation("SorteoVisitante", fields: [visitanteId], references: [id])
+  cancha      Cancha  @relation(fields: [canchaId], references: [id])
+  arbitro     Arbitro @relation(fields: [arbitroId], references: [id])
+
+  @@id([localId, visitanteId])
+}
+
 model Usuario {
   id              Int             @id @default(autoincrement())
   cedula          String          @unique
@@ -112,6 +152,7 @@ model EquipoTorneo {
   
   equipo    Equipo   @relation(fields: [equipoId], references: [id])
   torneo    Torneo   @relation(fields: [torneoId], references: [id])
+  grupos    Grupo[]
   
   @@unique([equipoId, torneoId])
 }
@@ -137,6 +178,7 @@ model Cancha {
   nombre    String
   ubicacion String?
   partidos  Partido[]
+  sorteos   Sorteo[]
 }
 
 model Arbitro {
@@ -144,6 +186,7 @@ model Arbitro {
   nombres   String
   contacto  String?
   partidos  Partido[]
+  sorteos   Sorteo[]
 }
 
 model Partido {

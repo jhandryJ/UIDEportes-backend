@@ -10,8 +10,8 @@ export const createCampeonatoSchema = z.object({
 export const createTorneoSchema = z.object({
     campeonatoId: z.number().int(),
     disciplina: z.enum(['FUTBOL', 'BASKET', 'ECUAVOLEY']),
-    categoria: z.enum(['OMBRES', 'MUJERES', 'MIXTO']),
-    genero: z.string().optional()
+    categoria: z.enum(['ELIMINATORIA', 'FASE_GRUPOS', 'TODOS_CONTRA_TODOS']), // Ahora define el formato
+    genero: z.enum(['MASCULINO', 'FEMENINO', 'MIXTO']) // Ahora define el género
 });
 
 export const campeonatoResponseSchema = createCampeonatoSchema.extend({

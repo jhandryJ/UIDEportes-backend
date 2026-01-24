@@ -1,0 +1,89 @@
+### Register User (Valid JSON)
+POST http://localhost:3000/api/auth/register
+Content-Type: application/json
+
+{
+  "cedula": "1712345678",
+  "nombres": "Juan",
+  "apellidos": "Perez",
+  "email": "juan.perez@uide.edu.ec",
+  "password": "password123",
+  "rol": "ESTUDIANTE"
+}
+
+### Login User (Valid JSON)
+POST http://localhost:3000/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "juan.perez@uide.edu.ec",
+  "password": "password123"
+}
+
+### Create Championship (REQUIRES TOKEN)
+# 1. Run Login request above
+# 2. Copy the "accessToken" from the response
+# 3. Paste it below after "Bearer "
+POST http://localhost:3000/api/campeonatos
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZW1haWwiOiJqaGphcmFtaWxsb3BlQHVpZGUuZWR1LmVjIiwicm9sIjoiQURNSU4iLCJpYXQiOjE3NjgzOTY5NDN9.bp1YsDv4HGnEyHbte51kcLfaQD1KTv_X0Z-o6OHyXSk
+
+{
+  "nombre": "Campeonato Interfacultades 2026",
+  "anio": 2026,
+  "fechaInicio": "2026-03-01T00:00:00Z"
+}
+
+### Create Tournament (Add to Championship)
+# Requires Token.
+# Ensure championshipId exists (e.g. 1)
+POST http://localhost:3000/api/torneos
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZW1haWwiOiJqaGphcmFtaWxsb3BlQHVpZGUuZWR1LmVjIiwicm9sIjoiQURNSU4iLCJpYXQiOjE3NjgzOTY5NDN9.bp1YsDv4HGnEyHbte51kcLfaQD1KTv_X0Z-o6OHyXSk
+
+{
+  "campeonatoId": 1,
+  "disciplina": "FUTBOL",
+  "categoria": "ELIMINATORIA",
+  "genero": "MASCULINO"
+}
+
+### List Championships (Public)
+GET http://localhost:3000/api/campeonatos
+
+
+### Create Team (Requires Token)
+# The user who creates it becomes Captain automatically
+POST http://localhost:3000/api/equipos
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZW1haWwiOiJqaGphcmFtaWxsb3BlQHVpZGUuZWR1LmVjIiwicm9sIjoiQURNSU4iLCJpYXQiOjE3NjgzOTY5NDN9.bp1YsDv4HGnEyHbte51kcLfaQD1KTv_X0Z-o6OHyXSk
+
+{
+  "nombre": "Los Tigres de Ingeniería",
+  "facultad": "Ingeniería",
+  "logoUrl": "https://example.com/logo.png"
+}
+
+### List All Teams (Public)
+GET http://localhost:3000/api/equipos
+
+### Get Team Details (Public)
+GET http://localhost:3000/api/equipos/1
+
+### Common Mistakes (Don't run these, just for reference)
+
+# 1. Trailing Comma (Invalid)
+# {
+#   "email": "test@test.com",
+#   "password": "123",  <-- Error here
+# }
+
+# 2. Single Quotes (Invalid)
+# {
+#   'email': 'test@test.com' <-- JSON requires double quotes "
+# }
+
+# 3. Missing Quotes on Keys (Invalid)
+# {
+#   email: "test@test.com" <-- Keys must be quoted "email"
+# }
