@@ -50,6 +50,23 @@ export async function getTeamsHandler(
     request: FastifyRequest,
     reply: FastifyReply
 ) {
+    // Si el usuario está autenticado, aplicar filtros RLS
+    if (request.user) {
+        const user = request.user as { id: number; rol: any };
+        const { getTeamFilter } = await import('../../utils/rls-helpers.js');
+
+        const teams = await prisma.equipo.findMany({
+            where: getTeamFilter(user.id, user.rol),
+            include: {
+                capitan: {
+                    select: { id: true, nombres: true, email: true }
+                }
+            }
+        });
+        return reply.send(teams);
+    }
+
+    // Si no está autenticado, mostrar todos (ruta pública)
     const teams = await prisma.equipo.findMany({
         include: {
             capitan: {
@@ -65,6 +82,20 @@ export async function getTeamHandler(
     reply: FastifyReply
 ) {
     const { id } = request.params;
+
+    // Si el usuario está autenticado, validar acceso con RLS
+    if (request.user) {
+        const user = request.user as { id: number; rol: any };
+        const { canAccessTeam } = await import('../../utils/rls-helpers.js');
+
+        const hasAccess = await canAccessTeam(user.id, user.rol, Number(id), prisma);
+        if (!hasAccess) {
+            return reply.code(403).send({
+                message: 'No tienes permiso para ver este equipo'
+            });
+        }
+    }
+
     const team = await prisma.equipo.findUnique({
         where: { id: Number(id) },
         include: {

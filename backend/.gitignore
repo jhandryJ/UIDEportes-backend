@@ -2,24 +2,32 @@
 node_modules/
 npm-debug.log
 yarn-error.log
+pnpm-debug.log*
 
 # Build outputs
 dist/
 build/
+*.tsbuildinfo
 
-# Environment variables
+# Environment variables (IMPORTANTE: Contiene credenciales de BD)
 .env
 .env.local
+.env.development
 .env.development.local
+.env.test
 .env.test.local
+.env.production
 .env.production.local
 
 # OS system files
 .DS_Store
 Thumbs.db
+*.swp
+*.swo
 
 # VS Code
 .vscode/
+!.vscode/extensions.json
 
 # Prisma
 /prisma/*.db
@@ -28,3 +36,47 @@ Thumbs.db
 # Logs
 logs/
 *.log
+
+# ============================================
+# ARCHIVOS SENSIBLES - NO SUBIR AL REPOSITORIO
+# ============================================
+
+# Configuraciones de Claude Desktop (contienen rutas locales y credenciales)
+claude_desktop_config.json
+claude_config_*.json
+
+# Archivos HTTP con tokens de autenticación
+test-rls.http
+create-demo-data.http
+
+# Scripts SQL con datos de prueba (pueden contener información sensible)
+seed-data-demo.sql
+
+# Scripts PowerShell con rutas locales
+test-mcp-inspector.ps1
+create-demo-data.ps1
+
+# Archivos de documentación (excepto README.md)
+*.md
+!README.md
+
+# ============================================
+# ARCHIVOS TEMPORALES Y DE RESPALDO
+# ============================================
+
+*.tmp
+*.temp
+*.bak
+*.backup
+*.old
+*.cache
+
+# ============================================
+# CERTIFICADOS Y CLAVES
+# ============================================
+
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx

@@ -10,6 +10,8 @@ import { authRoutes } from './modules/auth/auth.routes.js';
 import { tournamentRoutes } from './modules/tournaments/tournaments.routes.js';
 import { teamRoutes } from './modules/teams/teams.routes.js';
 import { enrollmentRoutes } from './modules/enrollments/enrollments.routes.js';
+import { paymentRoutes } from './modules/payments/payments.routes.js';
+import { displayBanner } from './utils/banner.js';
 
 const app = Fastify({
     logger: true,
@@ -40,7 +42,8 @@ app.register(swagger, {
             { name: 'Auth', description: 'Authentication related endpoints' },
             { name: 'Torneos', description: 'Championship and Tournament management' },
             { name: 'Equipos', description: 'Team management' },
-            { name: 'Inscripciones', description: 'Tournament enrollment management' }
+            { name: 'Inscripciones', description: 'Tournament enrollment management' },
+            { name: 'Pagos', description: 'Payment validation management' }
         ],
         components: {
             securitySchemes: {
@@ -64,6 +67,7 @@ app.register(authRoutes, { prefix: '/api/auth' });
 app.register(tournamentRoutes, { prefix: '/api' });
 app.register(teamRoutes, { prefix: '/api' });
 app.register(enrollmentRoutes, { prefix: '/api' });
+app.register(paymentRoutes, { prefix: '/api' });
 
 // Global Error Handler
 app.setErrorHandler((error: FastifyError, request, reply) => {
@@ -88,6 +92,7 @@ app.get('/health', async () => {
 // Start Server
 const start = async () => {
     try {
+        displayBanner();
         await app.listen({ port: 3000, host: '0.0.0.0' });
         console.log('Server running on http://localhost:3000');
         console.log('Swagger docs: http://localhost:3000/docs');
