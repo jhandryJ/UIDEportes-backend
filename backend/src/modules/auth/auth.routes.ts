@@ -1,10 +1,35 @@
 import { FastifyInstance } from 'fastify';
 import { ZodTypeProvider } from 'fastify-type-provider-zod';
-import { loginResponseSchema, loginUserSchema, registerUserSchema } from './auth.schemas.js';
-import { loginUserHandler, registerUserHandler, deleteUserHandler } from './auth.controller.js';
+import { loginResponseSchema, loginUserSchema, registerUserSchema, requestVerificationSchema, checkVerificationSchema } from './auth.schemas.js';
+import { loginUserHandler, registerUserHandler, deleteUserHandler, requestVerificationHandler, checkVerificationHandler } from './auth.controller.js';
 import { z } from 'zod';
 
 export async function authRoutes(app: FastifyInstance) {
+    app.withTypeProvider<ZodTypeProvider>().post('/request-verification', {
+        schema: {
+            tags: ['Auth'],
+            summary: 'Solicitar código de verificación',
+            body: requestVerificationSchema,
+            response: {
+                200: z.object({ success: z.boolean(), message: z.string() }),
+                500: z.object({ message: z.string() })
+            }
+        }
+    }, requestVerificationHandler);
+
+    app.withTypeProvider<ZodTypeProvider>().post('/check-verification', {
+        schema: {
+            tags: ['Auth'],
+            summary: 'Validar código de verificación',
+            body: checkVerificationSchema,
+            response: {
+                200: z.object({ success: z.boolean(), message: z.string() }),
+                400: z.object({ success: z.boolean(), message: z.string() }),
+                500: z.object({ message: z.string() })
+            }
+        }
+    }, checkVerificationHandler);
+
     app.withTypeProvider<ZodTypeProvider>().post('/register', {
         schema: {
             tags: ['Auth'],

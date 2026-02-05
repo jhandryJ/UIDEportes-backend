@@ -25,3 +25,12 @@ export const loginResponseSchema = z.object({
         rol: z.string()
     })
 });
+
+export const requestVerificationSchema = z.object({
+    email: z.string().email().describe('Email to send verification code')
+});
+
+export const checkVerificationSchema = z.object({
+    email: z.string().email(),
+    code: z.string().length(6)
+});

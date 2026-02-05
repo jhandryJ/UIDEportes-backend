@@ -235,3 +235,15 @@ model Feedback {
   
   usuario   Usuario? @relation(fields: [usuarioId], references: [id])
 }
+
+// [NEW] Email Verification
+model CodigoVerificacion {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  codigo    String   // 6 digits
+  intentos  Int      @default(0)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  
+  @@map("auth_codigos")
+}

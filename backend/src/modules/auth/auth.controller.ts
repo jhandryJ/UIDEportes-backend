@@ -1,8 +1,41 @@
 import { FastifyReply, FastifyRequest } from 'fastify';
 import bcrypt from 'bcryptjs';
 import { prisma } from '../../utils/prisma.js';
-import { loginUserSchema, registerUserSchema } from './auth.schemas.js';
+import { loginUserSchema, registerUserSchema, requestVerificationSchema, checkVerificationSchema } from './auth.schemas.js';
 import { z } from 'zod';
+import { generateVerificationCode, validateVerificationCode } from './auth.service.js';
+
+export async function requestVerificationHandler(
+    request: FastifyRequest<{ Body: z.infer<typeof requestVerificationSchema> }>,
+    reply: FastifyReply
+) {
+    const { email } = request.body;
+    try {
+        const result = await generateVerificationCode(email);
+        return reply.code(200).send(result);
+    } catch (error) {
+        request.log.error(error);
+        return reply.code(500).send({ message: 'Error generating code' });
+    }
+}
+
+export async function checkVerificationHandler(
+    request: FastifyRequest<{ Body: z.infer<typeof checkVerificationSchema> }>,
+    reply: FastifyReply
+) {
+    const { email, code } = request.body;
+    try {
+        const result = await validateVerificationCode(email, code);
+        if (!result.success) {
+            return reply.code(400).send(result);
+        }
+        return reply.code(200).send(result);
+    } catch (error) {
+        request.log.error(error);
+        return reply.code(500).send({ message: 'Error validating code' });
+    }
+}
+
 
 export async function registerUserHandler(
     request: FastifyRequest<{ Body: z.infer<typeof registerUserSchema> }>,

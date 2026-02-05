@@ -1,12 +1,10 @@
 #!/usr/bin/env node
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
-import {
-    CallToolRequestSchema,
-    ListToolsRequestSchema,
-} from '@modelcontextprotocol/sdk/types.js';
+import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
 import { PrismaClient } from '@prisma/client';
 import { getTeamFilter, getTournamentFilter, getMatchFilter } from '../utils/rls-helpers.js';
+import { generateVerificationCode, validateVerificationCode } from '../modules/auth/auth.service.js';
 
 // Inicializar Prisma
 const prisma = new PrismaClient();
@@ -81,6 +79,38 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
                         },
                     },
                     required: ['equipoId'],
+                },
+            },
+            {
+                name: 'request_verification_code',
+                description: 'Genera y "envía" (simulado) un código de verificación al correo indicado. Útil para registrarse.',
+                inputSchema: {
+                    type: 'object',
+                    properties: {
+                        email: {
+                            type: 'string',
+                            description: 'Correo electrónico',
+                        },
+                    },
+                    required: ['email'],
+                },
+            },
+            {
+                name: 'validate_verification_code',
+                description: 'Valida el código de verificación recibido por correo.',
+                inputSchema: {
+                    type: 'object',
+                    properties: {
+                        email: {
+                            type: 'string',
+                            description: 'Correo electrónico',
+                        },
+                        code: {
+                            type: 'string',
+                            description: 'Código de 6 dígitos recibido',
+                        },
+                    },
+                    required: ['email', 'code'],
                 },
             },
         ],
@@ -212,11 +242,13 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
                         equipoLocal: {
                             select: {
                                 nombre: true,
+                                // logoUrl: true
                             },
                         },
                         equipoVisitante: {
                             select: {
                                 nombre: true,
+                                // logoUrl: true
                             },
                         },
                         cancha: {
@@ -340,6 +372,42 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
                                 },
                                 message: 'Estadísticas obtenidas exitosamente',
                             }, null, 2),
+                        },
+                    ],
+                };
+            }
+
+            case 'request_verification_code': {
+                const { email } = args as { email: string };
+                if (!email) throw new Error('Email requerido');
+
+                const result = await generateVerificationCode(email);
+
+                return {
+                    content: [
+                        {
+                            type: 'text',
+                            text: JSON.stringify({
+                                success: result.success,
+                                message: result.message,
+                                note: "En un entorno real, el código se enviaría por correo. En este entorno de desarrollo, el código aparece en la consola del servidor backend (si está corriendo) o en la consola donde se ejecuta este MCP."
+                            }, null, 2),
+                        },
+                    ],
+                };
+            }
+
+            case 'validate_verification_code': {
+                const { email, code } = args as { email: string; code: string };
+                if (!email || !code) throw new Error('Email y código requeridos');
+
+                const result = await validateVerificationCode(email, code);
+
+                return {
+                    content: [
+                        {
+                            type: 'text',
+                            text: JSON.stringify(result, null, 2),
                         },
                     ],
                 };
